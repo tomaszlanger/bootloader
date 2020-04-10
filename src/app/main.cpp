@@ -111,7 +111,7 @@ int main(int, char**)
 	int my_image_width = 0;
 	int my_image_height = 0;
 	GLuint my_image_texture = 0;
-	bool ret = LoadTextureFromFile("MyImage01.jpg", &my_image_texture, &my_image_width, &my_image_height);
+	bool ret = LoadTextureFromFile("resources/MyImage01.jpg", &my_image_texture, &my_image_width, &my_image_height);
 	IM_ASSERT(ret);
 
 

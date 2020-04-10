@@ -33,8 +33,6 @@ set(APP_SOURCES
     imgui_demo.cpp
 )
 
-message ( "----Install Bin Dir------ "  "${STB_INTERFACE_INCLUDE_DIRECTORIES}")
-
 # Create the executable
 add_executable(${PROJECT_NAME} ${APP_SOURCES})
 
@@ -44,10 +42,13 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # Link with libraries
 target_link_libraries(${PROJECT_NAME} ${glfw3} stb::image ImGui opengl32 gdi32 shell32)
-# set_target_properties(
+
+#set_target_properties(
 #    MyApp PROPERTIES
 #    VS_DEBUGGER_WORKING_DIRECTORY $(TargetDir))
 
-
-# copy needed resources 
-# file(COPY ${NanoGUI_SOURCE_DIR}/resources/icons DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+# copy needed resources
+add_custom_command(TARGET MyApp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${MyApp_SOURCE_DIR}/resources"
+    "$<TARGET_FILE_DIR:MyApp>/resources")
