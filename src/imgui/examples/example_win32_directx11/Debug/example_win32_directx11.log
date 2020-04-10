@@ -1,0 +1,9 @@
+﻿  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_widgets.cpp
+  imgui_impl_dx11.cpp
+  imgui_impl_win32.cpp
+  main.cpp
+  Generowanie kodu...
+  example_win32_directx11.vcxproj -> C:\Users\Tomek\source\repos\ConsoleApplication1\ConsoleApplication1\imgui\examples\example_win32_directx11\Debug\example_win32_directx11.exe
