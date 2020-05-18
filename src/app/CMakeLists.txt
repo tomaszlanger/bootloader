@@ -23,6 +23,7 @@ include_directories(
     "../imgui/examples"
     "../imgui/examples/libs"
     "../imgui/examples/libs/glfw/include"
+	"../serial/include"
 )
 
 include_directories("${STB_INCLUDES}/stb")
@@ -31,6 +32,11 @@ include_directories("${STB_INCLUDES}/stb")
 set(APP_SOURCES
     main.cpp
     imgui_demo.cpp
+    imgui_extended.cpp
+	appwindow.cpp
+	guicontext.cpp
+	controller.cpp
+	console.cpp
 )
 
 # Create the executable
@@ -41,7 +47,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # Link with libraries
-target_link_libraries(${PROJECT_NAME} ${glfw3} stb::image ImGui opengl32 gdi32 shell32)
+target_link_libraries(${PROJECT_NAME} ${glfw3} stb::image ImGui serial opengl32 gdi32 shell32)
 
 #set_target_properties(
 #    MyApp PROPERTIES
