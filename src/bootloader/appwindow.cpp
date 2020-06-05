@@ -16,8 +16,6 @@ appWindow::appWindow(HWND parent) {
 		if (!glfwInit()) {
 			throw std::exception("GLFW initialisation failed!");
 		}
-		//glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-		//glfwWindowHint(GLFW_DECORATED, GL_FALSE);
 		window = glfwCreateWindow(1280, 720, "Johnson Matthey Batery Systems BMS Bootloader", NULL, NULL);
 		if (window == NULL) {
 			throw std::exception("App window creration failed!");
@@ -50,7 +48,7 @@ appWindow::appWindow(HWND parent) {
 	guiContext->closeComPortButtonClicked.connect(controller.get(), &controller::controller::closeSerialPort);
 	guiContext->detectDeviceButtonClicked.connect(controller.get(), &controller::controller::detectDevice);
 	guiContext->detectPortsButtonClicked.connect(controller.get(), &controller::controller::detectSerialPorts);
-	guiContext->runCodeButtonClicked.connect(controller.get(), &controller::controller::runCode);
+	guiContext->switchCodeButtonClicked.connect(controller.get(), &controller::controller::switchCode);
 
 	guiContext->userCodeAddressChanged.connect(controller.get(), &controller::controller::updateUserCodeAddress);
 	controller->userCodeAddressChanged.connect(guiContext.get(), &guiContext::guiContext::updateUserCodeAddressText);

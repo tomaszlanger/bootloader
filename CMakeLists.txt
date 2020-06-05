@@ -4,4 +4,4 @@ project(My_Solution)
 
 add_subdirectory(src/imgui)
 add_subdirectory(src/serial)
-add_subdirectory(src/app)
+add_subdirectory(src/bootloader)

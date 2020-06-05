@@ -19,7 +19,7 @@ console::console() {
 	Commands.push_back("CLASSIFY");  // "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
 	AutoScroll = true;
 	ScrollToBottom = false;
-	AddLog("Welcome to Dear ImGui!");
+	AddLog("Welcome to JMBS bootloader!");
 
 	auto size = Items.size();
 }
@@ -105,8 +105,8 @@ void console::DrawAsChild(const char* title, bool* p_open) {
 
 	// TODO: display items starting from the bottom
 
-	if (ImGui::SmallButton("Add Dummy Text")) { AddLog("%d some text", Items.Size); AddLog("some more text"); AddLog("display very important message here!"); } ImGui::SameLine();
-	if (ImGui::SmallButton("Add Dummy Error")) { AddLog("[error] something went wrong"); } ImGui::SameLine();
+	//if (ImGui::SmallButton("Add Dummy Text")) { AddLog("%d some text", Items.Size); AddLog("some more text"); AddLog("display very important message here!"); } ImGui::SameLine();
+	//if (ImGui::SmallButton("Add Dummy Error")) { AddLog("[error] something went wrong"); } ImGui::SameLine();
 	if (ImGui::SmallButton("Clear")) { ClearLog(); } ImGui::SameLine();
 	bool copy_to_clipboard = ImGui::SmallButton("Copy");
 	//static float t = 0.0f; if (ImGui::GetTime() - t > 0.02f) { t = ImGui::GetTime(); AddLog("Spam %f", t); }

@@ -13,6 +13,12 @@ namespace controller{
 
 using namespace sigslot;
 
+enum class DeviceStatus {
+	UNKNOWN = 0x00,
+	BOOTLOADER = 0x01,
+	APPLICATION = 0x02
+};
+
 class controller : public has_slots<multi_threaded_global> {
 
 public:
@@ -38,7 +44,7 @@ public:
 	void closeSerialPort();
 	void detectDevice();
 	void detectSerialPorts();
-	void runCode();
+	void switchCode();
 
 	void updateProgress(const bootloader::STBootProgress& progress);
 	uint8_t updateProgressPercent(uint8_t progress);
@@ -51,9 +57,16 @@ public:
 private:
 	void process();
 	void UploadFile(std::string portName, unsigned char* bin, uint32_t size, uint32_t address, uint32_t jumpAddress);
+	void controller::DownloadFile(std::string portName, unsigned char* bin, uint32_t size, uint32_t address);
 	void handleException(const std::exception &e);
 	void handleOpenSerialPort();
 	void handleCloseSerialPort();	
+	DeviceStatus deviceStatus();
+	void jumpToBootloader();
+	void jumpToApplication();
+	bool sendCommunicationCommandWithNoException(bootloader::DeviceCommunicationCommands command);
+	void validateFimware(bool validate);
+	void authorize(void);
 
 	std::thread* processThread;
 	std::mutex controllerMutex;
@@ -63,11 +76,11 @@ private:
 	std::string firmwarePath = "";
 	std::string selectedSerialPortName = "";
 	std::list<std::string> serialPortsList;
-	const uint32_t userCodeBaseAddress = 0x8000000;
+	const uint32_t userCodeBaseAddress = 0x8003200;
 	uint32_t userCodeAddress = 0;
 	uint32_t userCodePageNumber = 0;
-	bool globalErase = false;
-	std::string pageSize = "256";
+	bool globalErase = true;
+	std::string pageSize = "128";
 
 	uint8_t progressPercent = 0;
 	bool bootloaderBusy = false;

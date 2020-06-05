@@ -17,36 +17,16 @@
 namespace guiContext {
 
 guiContext::guiContext(GLFWwindow* parent) {
-	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsClassic();
 
 	// Setup Platform/Renderer bindings
 	parentWindow = parent;
 	ImGui_ImplGlfw_InitForOpenGL(parentWindow, true);
 	ImGui_ImplOpenGL2_Init();
-
-	// Load Fonts
-	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-	// - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-	// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-	// - Read 'docs/FONTS.txt' for more instructions and details.
-	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-	//io.Fonts->AddFontDefault();
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-	//IM_ASSERT(font != NULL);
 
 	int my_image_width = 0;
 	int my_image_height = 0;
@@ -65,7 +45,7 @@ guiContext::guiContext(GLFWwindow* parent) {
 	IM_ASSERT(result);
 	result = loadTextureFromFile("resources/check.png", &detectPortsTexture, &my_image_width, &my_image_height);
 	IM_ASSERT(result);
-	result = loadTextureFromFile("resources/jogging.png", &runCodeTexture, &my_image_width, &my_image_height);
+	result = loadTextureFromFile("resources/jogging.png", &switchCodeTexture, &my_image_width, &my_image_height);
 	IM_ASSERT(result);
 }
 
@@ -77,28 +57,15 @@ guiContext::~guiContext() {
 }
 
 void guiContext::execute() {
-	// Start the Dear ImGui frame
+
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-	//ImGui::Begin("Background Logo", NULL,
-	//	ImGuiWindowFlags_NoTitleBar |
-	//	ImGuiWindowFlags_NoResize |
-	//	ImGuiWindowFlags_NoMove |
-	//	ImGuiWindowFlags_NoScrollbar |
-	//	ImGuiWindowFlags_NoInputs |
-	//	ImGuiWindowFlags_NoScrollWithMouse);
-	//float my_tex_w = 300;
-	//float my_tex_h = 300;
-	//ImVec2 pos = ImGui::GetCursorScreenPos();
-	//ImGui::Image((void*)(intptr_t)(void*)(intptr_t)loadFileTexture, ImVec2(my_tex_w, my_tex_h), ImVec2(0, 0), ImVec2(1, 1), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0));
-	//ImGui::End();
-	//ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.4f);
+
 	ImGui::Begin("Johnson Matthey Batery Systems BMS Bootloader", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);	// Create a window called "Hello, world!" and append into it.
 	ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Once);
-	//ImGui::PopStyleVar();
 	int parentWindowWidth, parentWindowHeight;
 	glfwGetWindowSize(parentWindow, &parentWindowWidth, &parentWindowHeight);
 	ImGui::SetWindowSize(ImVec2(parentWindowWidth, parentWindowHeight));
@@ -123,7 +90,6 @@ void guiContext::execute() {
 	ImGui::Columns(4, NULL, true);
 	ImGui::SetColumnWidth(0,145);
 	ImGui::Separator();
-	//ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 1.6f);
 	if (disabled)
 		ImGuiExtended::DisableWidget();
 	if (ImGuiExtended::ImageButtonEx((void*)(intptr_t)loadFileTexture, ImVec2(32, 32), ImVec2(0, 0), ImVec2(1.0, 1.0), 2, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
@@ -221,11 +187,11 @@ void guiContext::execute() {
 	if (ImGui::IsItemHovered())
 		helpText = "Detect serial ports";	
 	ImGui::SameLine(0, 10);
-	if (ImGuiExtended::ImageButtonEx((void*)(intptr_t)runCodeTexture, ImVec2(32, 32), ImVec2(0, 0), ImVec2(1.0, 1.0), 2, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
-		runCodeButtonClicked();
+	if (ImGuiExtended::ImageButtonEx((void*)(intptr_t)switchCodeTexture, ImVec2(32, 32), ImVec2(0, 0), ImVec2(1.0, 1.0), 2, ImVec4(0.0f, 0.0f, 0.0f, 0.0f))) {
+		switchCodeButtonClicked();
 	}
 	if (ImGui::IsItemHovered())
-		helpText = "Run code";
+		helpText = "Swich bootloader/application code";
 	ImGui::Columns(1);
 	ImGui::Separator();
 	char userAddressInputText[9] = "";
@@ -235,6 +201,9 @@ void guiContext::execute() {
 		userAddressInputText[userCodeAddressText.copy(userAddressInputText, userCodeAddressText.length(), 0)];
 	}
 	ImGui::SetNextItemWidth(64);
+	if (disabled)
+		ImGuiExtended::EnableWidget();
+	ImGuiExtended::DisableWidget();
 	ImGui::InputText(
 		" ", 
 		userAddressInputText,
@@ -250,7 +219,7 @@ void guiContext::execute() {
 		helpText = "Firmare start address (hexadecimal)";
 
 	ImGui::SameLine(0, 0);
-	const char* pageSizeOptions[] = { "256", "128", "2048" };
+	const char* pageSizeOptions[] = { "128", "256", "2048" };
 	static int selectedPageSize = 0;
 	ImGui::SetNextItemWidth(75);
 	if (ImGui::Combo("Page size", &selectedPageSize, pageSizeOptions, IM_ARRAYSIZE(pageSizeOptions))) {
@@ -259,14 +228,14 @@ void guiContext::execute() {
 	if (ImGui::IsItemHovered())
 		helpText = "Select page size";
 	ImGui::SameLine(0, 10);
-	static bool globalErase = false;
+	static bool globalErase = true;
 	if (ImGui::Checkbox("Global erase", &globalErase)) {
 		globalEraseChanged(globalErase);
 	}
 	if (ImGui::IsItemHovered())
 		helpText = "Global erase";
-	if (disabled)
-		ImGuiExtended::EnableWidget();
+	
+	ImGuiExtended::EnableWidget();
 	ImGui::Separator();
 	char firmwarePathBuffer[500];
 	{
@@ -308,7 +277,6 @@ void guiContext::execute() {
 	ImGui::Text(helpText.c_str());
 	ImGui::Separator();
 	ImGui::SetCursorPos(lastCursorPosition);
-	//ImGui::PopStyleVar();
 	ImGui::End();
 
 	// Rendering
@@ -316,17 +284,9 @@ void guiContext::execute() {
 	int display_w, display_h;
 	glfwGetFramebufferSize(parentWindow, &display_w, &display_h);
 	glViewport(0, 0, display_w, display_h);
-	//glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	// If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),
-	// you may need to backup/reset/restore current shader using the commented lines below.
-	//GLint last_program;
-	//glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
-	//glUseProgram(0);
-
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-	//glUseProgram(last_program);
 }
 
 bool guiContext::loadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height) {

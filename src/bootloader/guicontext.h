@@ -36,7 +36,7 @@ public:
 	signal0<multi_threaded_global> closeComPortButtonClicked;
 	signal0<multi_threaded_global> detectDeviceButtonClicked;
 	signal0<multi_threaded_global> detectPortsButtonClicked;
-	signal0<multi_threaded_global> runCodeButtonClicked;
+	signal0<multi_threaded_global> switchCodeButtonClicked;
 	signal1<std::string&, multi_threaded_global> userCodeAddressChanged;
 	signal1<bool, multi_threaded_global> globalEraseChanged;
 	signal1<std::string&, multi_threaded_global> pageSizeSelected;
@@ -45,35 +45,10 @@ public:
 	void updateFirmwarePathText(std::string& firmwarePath);
 	void updateSerialPortsListText(std::list<std::string>& portsList);
 	void updateUserCodeAddressText(std::string& address);
-
 	void updateProgressBar(uint8_t progress);
 	void disableUserInterface(bool disable);
 	
-
 private:
-
-	RECT  lpRect;
-	ImVec2 winSize_old = ImVec2(0, 0);
-	ImVec2 winPosition_old = ImVec2(0, 0);
-	ImVec2 dragDelta_old = ImVec2(0, 0);
-
-	ImVec2 moveDelta = ImVec2(0, 0);
-	ImVec2 moveDeltaOld = ImVec2(0, 0);
-
-	ImVec2 referencePos = ImVec2(0, 0);
-	bool positionChanged = false;
-
-	ImVec2 moveStartPosition = ImVec2(0, 0);
-
-	int moveOffsetX = 0;
-	int moveOffsetY = 0;
-
-	uint16_t counter = 0;
-	uint16_t counter1 = 0;
-	
-	bool userInterfaceDisabled = false;
-
-	/// my vals
 	GLFWwindow* parentWindow;
 	GLuint loadFileTexture = 0;
 	GLuint writeFirmwareTexture = 0;
@@ -82,20 +57,17 @@ private:
 	GLuint closeComPortTexture = 0;
 	GLuint detectDeviceTexture = 0;
 	GLuint detectPortsTexture = 0;
-	GLuint runCodeTexture = 0;
-
+	GLuint switchCodeTexture = 0;
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-
 	std::queue<std::string> messagesQueue;
 	std::mutex quiContextMutex;
 	console console;
-
 	std::list<std::string> serialPortsList;
 	std::string firmwarePathText = "";
 	std::string userCodeAddressText = "";
-	float progressBarValue = 0;
-	
+	float progressBarValue = 0;	
 	bool serialPortsListChanged = false;
+	bool userInterfaceDisabled = false;
 };
 
 }  // namespace guiContext

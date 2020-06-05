@@ -36,10 +36,8 @@ string controller::convertAddressToString(uint32_t address) {
 }
 
 void controller::writeFirmware() {
-
 	std::unique_lock<std::mutex> lk(controllerMutex);
 	serialPortsListChanged(serialPortsList);
-
 	if (!bootloaderBusy) {
 		bootloaderBusy = true;
 		bootloaderStatusChanged(bootloaderBusy);
@@ -47,10 +45,6 @@ void controller::writeFirmware() {
 			std::ifstream firmwareFile(firmwarePath, std::ios::binary);
 			try
 			{
-				/* read file */
-				uint8_t bin[200];
-				uint32_t length;
-				
 				if (!firmwareFile.is_open()) {
 					throw bootloader::STBootException("Cannot open firmware file!");
 				}
@@ -61,7 +55,32 @@ void controller::writeFirmware() {
 				firmwareFile.seekg(0, firmwareFile.beg);
 				auto dataBuffer = make_unique<uint8_t[]>(firmwareFileLenght);
 				firmwareFile.read((char*)(dataBuffer.get()), firmwareFileLenght);
-				UploadFile(selectedSerialPortName, dataBuffer.get(), firmwareFileLenght, userCodeAddress, userCodeAddress);		
+				firmwareFile.close();				
+				//switch (deviceStatus()) {
+				//	case DeviceStatus::APPLICATION:				
+				//		jumpToBootloader();					
+				//		break;
+				//	case DeviceStatus::BOOTLOADER:									
+				//		break;
+				//	default:
+				//		throw bootloader::STBootException("Firmware write aborted!");					
+				//		break;
+				//}
+				authorize();
+				//validateFimware(false);
+				//UploadFile(selectedSerialPortName, dataBuffer.get(), firmwareFileLenght, userCodeAddress, userCodeAddress);
+				//auto readedDataBuffer = make_unique<uint8_t[]>(firmwareFileLenght);
+				//DownloadFile(selectedSerialPortName, readedDataBuffer.get(), firmwareFileLenght, userCodeAddress);
+				//for (uint32_t i = 0; i < firmwareFileLenght; i++) {
+				//	if (readedDataBuffer[i] != dataBuffer[i]) {
+				//		throw bootloader::STBootException("Verification failed!");
+				//	}
+				//}
+				//validateFimware(true);
+				//sendMessageToConsole(string("Verifivation passed"));
+				//jumpToApplication();
+				// Wait some time to allow application code start
+				//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			}
 			catch (const std::exception &e) {
 				firmwareFile.close();
@@ -75,7 +94,36 @@ void controller::writeFirmware() {
 
 void controller::eraseFirmware() {
 	std::unique_lock<std::mutex> lk(controllerMutex);
-
+	if (!bootloaderBusy) {
+		bootloaderBusy = true;
+		bootloaderStatusChanged(bootloaderBusy);
+		bootProcessThread = make_unique<std::thread>([&] {
+			try {
+				switch (deviceStatus()) {
+				case DeviceStatus::APPLICATION:
+					jumpToBootloader();
+					break;
+				case DeviceStatus::BOOTLOADER:
+					break;
+				default:
+					throw bootloader::STBootException("Firmware erase aborted!");
+					break;
+				}
+				authorize();
+				validateFimware(false);
+				bootloader->close();
+				bootloader->open(selectedSerialPortName);
+				sendMessageToConsole(string("Erasing..."));
+				bootloader->GlobalErase();
+				sendMessageToConsole(string("Erase complete"));
+			}
+			catch (const std::exception &e) {
+				bootloader->close();
+				handleException(e);
+			}
+			updateBootloaderFinished(true);
+		});
+	}
 }
 
 void controller::updateFirmwarePath(std::string& filePath) {
@@ -112,35 +160,19 @@ void controller::detectDevice() {
 		bootProcessThread = make_unique<std::thread>([&] {
 			try
 			{
-				// wake up BMS
-				// sett bootloader mode with confirmation
-
-				selectedSerialPortName = "COM11";
-				/* read file */
-				uint8_t bin[200];
-				uint32_t length;
-
-				/* close device */
-				bootloader->close();
-				/* open device */
-				bootloader->open(selectedSerialPortName);
-
-				bootloader->wakeUp(bin, &length);
-
-				std::stringstream message;
-				for (int i = 0; i < length; ++i)
-					message << std::hex << std::uppercase << (int)bin[i] << " ";
-				sendMessageToConsole("Wake up response: " + message.str());
-
-				bootloader->status(bin, &length);
-				for (int i = 0; i < length; ++i)
-					message << std::hex << std::uppercase << (int)bin[i] << " ";
-				sendMessageToConsole("RX: " + message.str());
-
-				//UploadFile(selectedSerialPortName, bin, sizeof(bin), userCodeAddress, userCodeAddress);
+				auto deviceMode = deviceStatus();
+				switch (deviceMode) {
+					case DeviceStatus::APPLICATION:									
+						break;
+					case DeviceStatus::BOOTLOADER:										
+						break;
+					default:				
+						break;
+				}
 			}
 			catch (const std::exception &e) {
 				handleException(e);
+				bootloader->close();
 			}
 			updateBootloaderFinished(true);
 		});
@@ -153,8 +185,34 @@ void controller::detectSerialPorts() {
 	serialPortsListChanged(serialPortsList);
 }
 
-void controller::runCode() {
+void controller::switchCode() {
 	std::unique_lock<std::mutex> lk(controllerMutex);
+	if (!bootloaderBusy) {
+		bootloaderBusy = true;
+		bootloaderStatusChanged(bootloaderBusy);
+		bootProcessThread = make_unique<std::thread>([&] {
+			try
+			{
+				switch (deviceStatus()) {
+				case DeviceStatus::APPLICATION:
+					jumpToBootloader();
+					break;
+				case DeviceStatus::BOOTLOADER:
+					jumpToApplication();
+					// Wait some time to allow application code start
+					std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+					break;
+				default:
+					break;
+				}
+			}
+			catch (const std::exception &e) {
+				bootloader->close();
+				handleException(e);
+			}			
+			updateBootloaderFinished(true);
+		});
+	}
 }
 
 void controller::updateProgress(const bootloader::STBootProgress& progress) {
@@ -209,11 +267,9 @@ void controller::updateUserCodeAddress(std::string& address) {
 }
 
 void controller::process() {
-
 	while (!initialised) {};
 	updateUserCodeAddress(convertAddressToString(userCodeBaseAddress));
 	detectSerialPorts();
-
 	while (1) {
 		{
 			std::unique_lock<std::mutex> lk(controllerMutex);
@@ -225,86 +281,6 @@ void controller::process() {
 				bootloaderStatusChanged(bootloaderBusy);
 			}
 		}
-
-		//	std::this_thread::sleep_for(10s);
-
-
-		{
-			//std::string message = "";
-			//{
-			//	std::unique_lock<std::mutex> lk(controllerMutex);
-			//	if (!otherThreadsMessages.empty()) {
-			//		message = otherThreadsMessages.front();
-			//		otherThreadsMessages.pop();
-			//	}
-			//}
-
-			//switch (message)
-			//{
-			//	case MSG_POST_USER_DATA:
-			//		break;
-
-
-			//	case MSG_TIMER:
-			//		break;
-
-			//	case MSG_EXIT_THREAD:
-			//		break;
-
-			//	default:
-			//		break;
-			//}
-
-
-			//{
-				//while {otherThreadsMessages.}
-
-
-				//std::this_thread::sleep_for(10s);
-
-				//std::unique_lock<std::mutex> lk(controllerMutex);
-
-				//if (writeFirmwareFinished == true) {
-				//	bootProcessThread->join();
-				//	bootProcessThread.release();
-				//	writeFirmwareFinished = false;
-				//	bootloaderBusy = false;
-				//	bootloaderStatusChanged(bootloaderBusy);
-				//}
-		}
-
-		//while (iiii < 100)
-		//{
-		//	iiii++;
-		//	info = "Example info Example info Example info Example info Example info Example info" +std::to_string(iiii);
-		//	total += info.size();
-		//	sendMessageToConsole(info);
-		//}	
-		//std::this_thread::sleep_for(std::chrono::seconds(10));
-		//iiii = 0;
-		uint8_t ssss = 44;
-		//sendFirmwareUpdateProgress(ssss);
-		{
-			// Wait for a message to be added to the queue
-			//std::unique_lock<std::mutex> lk(controllerMutex);
-			//while (m_queue.empty())
-			//	m_cv.wait(lk);
-
-			//if (m_queue.empty())
-			//	continue;
-
-			//msg = m_queue.front();
-			//m_queue.pop();
-		}
-
-		//	addConsoleInfo(info);
-		//	iiii++;
-		//}
-
-		//if (sendInfo) {
-		//	sendInfo = false;
-
-		//	addConsoleInfo(info);
 	}
 }
 
@@ -335,21 +311,45 @@ void controller::UploadFile(std::string portName, unsigned char* bin, uint32_t s
 		for (uint32_t i = 0; i < size; i += psize) {
 			/* erase page */
 			bootloader->ErasePage((i + address - 0x08000000) / psize);
-			/* update progress bar */
-			sendMessageToConsole(to_string((int32_t)i * 100 / size));
 		}
 	}
-
 	/* apply new message */
 	sendMessageToConsole(string("Programming..."));
 	/* progress reporter */
-	bootloader::STBootProgress p(0, 0, std::bind(&controller::updateProgress, this, _1));
+	bootloader::STBootProgress p(0, size, std::bind(&controller::updateProgress, this, _1));
 	/* write memory */
 	bootloader->WriteMemory(address, bin, 0, size, p);
 	/* update the status */
 	sendMessageToConsole(string("Success: " + to_string(size) + " bytes written"));
-	/* go! */
-	bootloader->Jump(jumpAddress);
+	/* end communication */
+	bootloader->close();
+}
+
+/* upload a binary image to uC */
+void controller::DownloadFile(std::string portName, unsigned char* bin, uint32_t size, uint32_t address) {
+	using namespace std::placeholders;
+	/* get page size */
+	uint32_t psize = stoi(pageSize);
+	/* close device */
+	bootloader->close();
+	/* open device */
+	bootloader->open(portName);
+	/* initialize communication */
+	bootloader->Initialize();
+	/* update the status */
+	std::ostringstream hexProductID;
+	hexProductID << std::showbase << std::hex << std::uppercase << bootloader->ProductID;
+	sendMessageToConsole("Connected: Ver: " + bootloader->Version + ", PID: " + hexProductID.str());
+	/* give some chance see the message */
+	std::this_thread::sleep_for(500ms);
+	/* apply new message */
+	sendMessageToConsole(string("Reading..."));
+	/* progress reporter */
+	bootloader::STBootProgress p(0, size, std::bind(&controller::updateProgress, this, _1));
+	/* write memory */
+	bootloader->ReadMemory(address, bin, 0, size, p);
+	/* update the status */
+	sendMessageToConsole(string("Success: " + to_string(size) + " bytes readed"));
 	/* end communication */
 	bootloader->close();
 }
@@ -384,6 +384,88 @@ void controller::handleCloseSerialPort() {
 	catch (const std::exception &e) {
 		handleException(e);
 	}
+}
+
+DeviceStatus controller::deviceStatus() {
+	auto status = DeviceStatus::UNKNOWN;
+	try {
+		bootloader->close();
+		bootloader->open(selectedSerialPortName);
+		auto deviceWakedUp = sendCommunicationCommandWithNoException(bootloader::DeviceCommunicationCommands::ENABLE_PRODUCTION_MODE);
+		if (deviceWakedUp) {
+			bootloader->sendCommunicationCommand(bootloader::DeviceCommunicationCommands::DISABLE_PRODUCTION_MODE);
+			sendMessageToConsole(string("Detected device in application mode!"));
+			status = DeviceStatus::APPLICATION;
+		}
+		else {
+			bootloader->Initialize();
+			sendMessageToConsole(string("Detected device in bootloader mode!"));
+			status = DeviceStatus::BOOTLOADER;
+		}
+		bootloader->close();
+	} catch (const std::exception &e) {
+		bootloader->close();
+		sendMessageToConsole(string("No device detected!"));
+	}
+	return status;
+}
+
+void controller::jumpToBootloader() {
+	sendMessageToConsole(string("Send jump to bootloader command"));
+	bootloader->close();
+	bootloader->open(selectedSerialPortName);
+	bootloader->sendCommunicationCommand(bootloader::DeviceCommunicationCommands::ENABLE_PRODUCTION_MODE);
+	bootloader->sendCommunicationCommand(bootloader::DeviceCommunicationCommands::JUMP_TO_BOOTLOADER);
+	bootloader->close();
+	sendMessageToConsole(string("Jump to bootloader success!"));
+}
+
+void controller::jumpToApplication() {
+	sendMessageToConsole(string("Send jump to application command"));
+	bootloader->close();
+	bootloader->open(selectedSerialPortName);
+	bootloader->Jump(userCodeAddress);
+	sendMessageToConsole(string("Jump to application success"));
+	bootloader->close();
+}
+
+bool controller::sendCommunicationCommandWithNoException(bootloader::DeviceCommunicationCommands command) {
+	auto success = true;
+	auto portWasOpen = bootloader->isOpen();
+	try {
+		bootloader->sendCommunicationCommand(command);
+	} catch (const std::exception &e) {		
+		bootloader->close();
+		success = false;
+	}
+	if (portWasOpen) {
+		if (!bootloader->isOpen()) {
+			bootloader->open(selectedSerialPortName);
+		}
+	}
+	return success;
+}
+
+void controller::validateFimware(bool validate) {
+	constexpr uint32_t VALID_FIRMWARE_VALUE = 0x55555555;
+
+	uint32_t commandCode = UINT32_MAX - 1;
+	if (validate) {
+		commandCode = UINT32_MAX;
+	}
+	bootloader->close();
+	bootloader->open(selectedSerialPortName);
+	bootloader->Write(commandCode, (uint8_t*)(&VALID_FIRMWARE_VALUE), 0, 4);
+	bootloader->close();
+}
+
+void controller::authorize() {
+	sendMessageToConsole(string("Send authorize command"));
+	bootloader->close();
+	bootloader->open(selectedSerialPortName);
+	bootloader->Authorize();
+	sendMessageToConsole(string("Authorization passed!"));
+	bootloader->close();
 }
 
 }	// namespace controller

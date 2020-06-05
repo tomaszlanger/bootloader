@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MyApp VERSION 1.0.0)
+project(Bootloader VERSION 1.0.0)
 
 find_library(glfw3 NAMES glfw3 PATHS "../imgui/examples/libs/glfw/lib-vc2010-32")
 
@@ -30,9 +30,9 @@ include_directories("${STB_INCLUDES}/stb")
 
 # App source files
 set(APP_SOURCES
-    main.cpp
-    imgui_demo.cpp
+    main.cpp    
     imgui_extended.cpp
+	bootloader.cpp
 	appwindow.cpp
 	guicontext.cpp
 	controller.cpp
@@ -49,12 +49,12 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 # Link with libraries
 target_link_libraries(${PROJECT_NAME} ${glfw3} stb::image ImGui serial opengl32 gdi32 shell32)
 
-#set_target_properties(
-#    MyApp PROPERTIES
-#    VS_DEBUGGER_WORKING_DIRECTORY $(TargetDir))
+set_target_properties(
+    Bootloader PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY $(TargetDir))
 
 # copy needed resources
-add_custom_command(TARGET MyApp POST_BUILD
+add_custom_command(TARGET Bootloader POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${MyApp_SOURCE_DIR}/resources"
-    "$<TARGET_FILE_DIR:MyApp>/resources")
+    "${Bootloader_SOURCE_DIR}/resources"
+    "$<TARGET_FILE_DIR:Bootloader>/resources")

@@ -16,4 +16,3 @@ int main(int, char**)
 	application.execute();
 	return 0;
 }
-
