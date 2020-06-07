@@ -65,8 +65,9 @@ appWindow::appWindow(HWND parent) {
 }
 
 appWindow::~appWindow() {
-	glfwDestroyWindow(window);
-	glfwTerminate();
+	// Keep Imgui window frozen and visible until all threads will be finished
+	//glfwDestroyWindow(window);
+	//glfwTerminate();
 }
 
 void appWindow::glfw_error_callback(int error, const char* description) {

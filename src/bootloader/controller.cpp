@@ -21,8 +21,11 @@ controller::controller() {
 }
 
 controller::~controller() {
-	processThread->join();
-	delete processThread;
+	cancelAllThreads = true;
+	if (processThread) {
+		if (processThread->joinable())
+			processThread->join();
+	}
 	if (bootProcessThread) {
 		if  (bootProcessThread->joinable())
 			bootProcessThread->join();
@@ -270,7 +273,7 @@ void controller::process() {
 	while (!initialised) {};
 	updateUserCodeAddress(convertAddressToString(userCodeBaseAddress));
 	detectSerialPorts();
-	while (1) {
+	while (!cancelAllThreads) {
 		{
 			std::unique_lock<std::mutex> lk(controllerMutex);
 			if (bootloaderFinished == true) {
@@ -282,6 +285,7 @@ void controller::process() {
 			}
 		}
 	}
+	bootloader->cancelOperation();
 }
 
 /* upload a binary image to uC */

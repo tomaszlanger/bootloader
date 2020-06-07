@@ -72,6 +72,7 @@ private:
 	std::mutex controllerMutex;
 	std::unique_ptr<bootloader::bootloader> bootloader;
 	std::unique_ptr<std::thread> bootProcessThread;
+	std::atomic<bool> cancelAllThreads = false;
 
 	std::string firmwarePath = "";
 	std::string selectedSerialPortName = "";
