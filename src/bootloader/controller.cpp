@@ -56,31 +56,31 @@ void controller::writeFirmware() {
 				auto dataBuffer = make_unique<uint8_t[]>(firmwareFileLenght);
 				firmwareFile.read((char*)(dataBuffer.get()), firmwareFileLenght);
 				firmwareFile.close();				
-				//switch (deviceStatus()) {
-				//	case DeviceStatus::APPLICATION:				
-				//		jumpToBootloader();					
-				//		break;
-				//	case DeviceStatus::BOOTLOADER:									
-				//		break;
-				//	default:
-				//		throw bootloader::STBootException("Firmware write aborted!");					
-				//		break;
-				//}
+				switch (deviceStatus()) {
+					case DeviceStatus::APPLICATION:				
+						jumpToBootloader();					
+						break;
+					case DeviceStatus::BOOTLOADER:									
+						break;
+					default:
+						throw bootloader::STBootException("Firmware write aborted!");					
+						break;
+				}
 				authorize();
-				//validateFimware(false);
-				//UploadFile(selectedSerialPortName, dataBuffer.get(), firmwareFileLenght, userCodeAddress, userCodeAddress);
-				//auto readedDataBuffer = make_unique<uint8_t[]>(firmwareFileLenght);
-				//DownloadFile(selectedSerialPortName, readedDataBuffer.get(), firmwareFileLenght, userCodeAddress);
-				//for (uint32_t i = 0; i < firmwareFileLenght; i++) {
-				//	if (readedDataBuffer[i] != dataBuffer[i]) {
-				//		throw bootloader::STBootException("Verification failed!");
-				//	}
-				//}
-				//validateFimware(true);
-				//sendMessageToConsole(string("Verifivation passed"));
-				//jumpToApplication();
+				validateFimware(false);
+				UploadFile(selectedSerialPortName, dataBuffer.get(), firmwareFileLenght, userCodeAddress, userCodeAddress);
+				auto readedDataBuffer = make_unique<uint8_t[]>(firmwareFileLenght);
+				DownloadFile(selectedSerialPortName, readedDataBuffer.get(), firmwareFileLenght, userCodeAddress);
+				for (uint32_t i = 0; i < firmwareFileLenght; i++) {
+					if (readedDataBuffer[i] != dataBuffer[i]) {
+						throw bootloader::STBootException("Verification failed!");
+					}
+				}
+				validateFimware(true);
+				sendMessageToConsole(string("Verifivation passed"));
+				jumpToApplication();
 				// Wait some time to allow application code start
-				//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			}
 			catch (const std::exception &e) {
 				firmwareFile.close();
